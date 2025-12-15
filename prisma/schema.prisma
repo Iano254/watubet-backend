@@ -1,0 +1,350 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  uniqueId              Int                    @unique @default(autoincrement())
+  id                    String                 @id @default(uuid())
+  walletId              String                 @unique
+  phoneNumber           String                 @unique
+  password              String
+  balance               Float
+  clientSeed            String
+  refreshToken          String?
+  nickname              String?                @unique
+  lastLoginAt           DateTime?
+  isAdmin               Boolean                @default(false)
+  mutedUntil            DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  bets                  Bet[]
+  chatMessages          ChatMessage[]
+  messageReactions      MessageReaction[]
+  deposits              Deposit[]
+  withdrawals           Withdrawal[]
+  withdrawalRequests    WithdrawalRequest[]
+  minesGames            MinesGame[]
+  highValueTransactions HighValueTransaction[]
+  isBanned              Boolean                @default(false)
+  referralCode          String                 @unique @default(uuid())
+  referredBy            String?
+  referrer              User?                  @relation("UserReferrals", fields: [referredBy], references: [id])
+  referrals             User[]                 @relation("UserReferrals")
+  affiliateEarnings     AffiliateEarning[]
+  referralEarnings      ReferralEarning[]
+  referralToEarnings    ReferralEarning[]      @relation("ReferralToEarning")
+  affiliateWithdrawals  AffiliateWithdrawal[]
+  bonuses               Bonus[] // Added relation to Bonus model
+
+  @@unique([id, walletId])
+}
+
+model Deposit {
+  id                 String    @id @default(uuid())
+  userId             String
+  walletId           String
+  amount             Float
+  phoneNumber        String
+  businessShortCode  String
+  merchantRequestID  String?
+  checkoutRequestID  String?
+  resultCode         String?
+  resultDesc         String?
+  mpesaReceiptNumber String?
+  transactionDate    DateTime?
+  status             String
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  user               User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([walletId])
+}
+
+model Withdrawal {
+  id            String   @id @default(uuid())
+  walletId      String
+  amount        Float
+  transactionId String
+  status        String
+  createdAt     DateTime @default(now())
+  user          User     @relation(fields: [walletId], references: [walletId])
+}
+
+model WithdrawalRequest {
+  id                String              @id @default(uuid())
+  userId            String
+  walletId          String
+  amount            Float
+  status            String              @default("PENDING")
+  reason            String?
+  phoneNumber       String
+  type              String              @default("REGULAR")
+  checkoutRequestID String?             @unique
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  user              User                @relation(fields: [userId], references: [id])
+  affiliateEarnings AffiliateEarning[]
+  affiliateWithdrawal AffiliateWithdrawal?
+}
+
+model Bet {
+  id          String   @id @default(uuid())
+  userId      String
+  walletId    String
+  amount      Float
+  winAmount   Float?
+  profit      Float?
+  cashoutAt   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isSecondBet Boolean  @default(false)
+  isSimulated Boolean  @default(false)
+  user        User     @relation(fields: [userId], references: [id])
+  game        Game     @relation(fields: [gameId], references: [id])
+  gameId      String
+
+  @@index([gameId])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model Game {
+  id                    String                 @id @default(uuid())
+  roundId               Int                    @unique
+  gameHash              String                 @unique
+  crashPoint            Float
+  salt                  String
+  clientSeed            String
+  serverSeed            String
+  houseEdge             Float
+  startTime             DateTime
+  endTime               DateTime?
+  futureCrashPoint      FutureCrashPoint?      @relation("GameCrashPoint")
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  bets                  Bet[]
+  totalBets             Int                    @default(0)
+  totalAmount           Float                  @default(0)
+  totalPayout           Float                  @default(0)
+  profit                Float                  @default(0)
+  highValueTransactions HighValueTransaction[]
+  highMultiplierGame    HighMultiplierGame?
+
+  @@index([endTime])
+  @@index([roundId])
+  @@index([gameHash])
+}
+
+model FutureCrashPoint {
+  id         String    @id @default(uuid())
+  roundId    Int       @unique
+  crashPoint Float
+  isUsed     Boolean   @default(false)
+  usedAt     DateTime?
+  game       Game?     @relation("GameCrashPoint", fields: [roundId], references: [roundId])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([isUsed])
+  @@index([roundId])
+}
+
+model GameCounter {
+  id          String   @id @default("game_counter")
+  lastRoundId Int      @default(0)
+  updatedAt   DateTime @updatedAt
+}
+
+model GameSettings {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ChatMessage {
+  id              String            @id @default(uuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id])
+  message         String
+  parentId        String?
+  parent          ChatMessage?      @relation("ReplyTo", fields: [parentId], references: [id])
+  replies         ChatMessage[]     @relation("ReplyTo")
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  edited          Boolean           @default(false)
+  isGif           Boolean           @default(false)
+  isAdminResponse Boolean           @default(false)
+  reactions       MessageReaction[]
+
+  @@index([userId])
+  @@index([parentId])
+}
+
+model MessageReaction {
+  id        String      @id @default(uuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id])
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  emoji     String
+  createdAt DateTime    @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model MinesGame {
+  id              String    @id @default(uuid())
+  userId          String
+  walletId        String
+  betAmount       Float
+  numberOfMines   Int
+  gameHash        String    @unique
+  clientSeed      String
+  serverSeed      String
+  salt            String
+  status          String
+  revealedCells   Int[]     @default([])
+  minePositions   Int[]     @default([])
+  multiplier      Float     @default(1)
+  finalMultiplier Float?
+  startTime       DateTime  @default(now())
+  endTime         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([gameHash])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model HighValueTransaction {
+  id          String   @id @default(uuid())
+  walletId    String
+  type        String
+  amount      Float
+  gameId      String
+  multiplier  Float
+  isSimulated Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [walletId], references: [walletId])
+  game        Game     @relation(fields: [gameId], references: [id])
+}
+
+model HighMultiplierGame {
+  id             String   @id @default(uuid())
+  gameId         String   @unique
+  crashPoint     Float
+  totalBetAmount Float
+  totalWinnings  Float
+  createdAt      DateTime @default(now())
+  game           Game     @relation(fields: [gameId], references: [id])
+
+  @@index([crashPoint])
+  @@index([gameId])
+}
+
+model RainTransaction {
+  id               String          @id @default(uuid())
+  fromAdmin        String
+  amount           Float
+  recipientCount   Int
+  totalDistributed Float
+  createdAt        DateTime        @default(now())
+  recipients       RainRecipient[]
+}
+
+model RainRecipient {
+  id            String          @id @default(uuid())
+  userId        String
+  amount        Float
+  transaction   RainTransaction @relation(fields: [transactionId], references: [id])
+  transactionId String
+
+  @@index([userId])
+  @@index([transactionId])
+}
+
+model AffiliateEarning {
+  uniqueId          Int      @unique @default(autoincrement())
+  id                String   @id @default(uuid())
+  userId            String
+  referralId        String
+  depositAmount     Float
+  commissionRate    Float
+  level             Int
+  amount            Float
+  isPaid            Boolean  @default(false)
+  status            String?  @default("PENDING")
+  withdrawalId      String?
+  withdrawal        WithdrawalRequest? @relation(fields: [withdrawalId], references: [id])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([referralId])
+}
+
+model ReferralEarning {
+  id         String   @id @default(uuid())
+  userId     String
+  referralId String
+  level      Int
+  amount     Float
+  baseAmount Float
+  status     String   @default("PENDING")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User @relation(fields: [userId], references: [id])
+  referral User @relation("ReferralToEarning", fields: [referralId], references: [id])
+
+  @@index([userId])
+  @@index([referralId])
+}
+
+model AffiliateWithdrawal {
+  id                    String   @id @default(cuid())
+  userId                String
+  amount                Float
+  walletAddress         String
+  status                String   @default("PENDING")
+  withdrawalId          String?  @unique
+  balanceBeforeWithdrawal Float
+  balanceAfterWithdrawal  Float
+  withdrawal            WithdrawalRequest? @relation(fields: [withdrawalId], references: [id])
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  user                  User     @relation(fields: [userId], references: [id])
+}
+
+model Bonus {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  type         String   // DEPOSIT_CASHBACK, LOSING_STREAK, WINNING_STREAK
+  amount       Float
+  percentage   Float
+  depositAmount Float?  // For deposit cashback
+  status       String   // PENDING, CREDITED, CANCELLED
+  metadata     String?  @db.Text // JSON string with additional data
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
