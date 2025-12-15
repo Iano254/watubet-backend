@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { mpesaConfig } from '../config/mpesaconfig.js';
+import { mpesaConfig } from '../config/mpesaconfig';
 
 interface TokenData {
   accessToken: string;

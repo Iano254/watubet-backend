@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { mpesaConfig } from '../config/mpesaconfig.js';
-import { getAccessToken } from '../utils/tokenManager.js';
+import { mpesaConfig } from '../config/mpesaconfig';
+import { getAccessToken } from '../utils/tokenManager';
 
 function getTimestamp(): string {
   return new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3);

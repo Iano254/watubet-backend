@@ -1,7 +1,7 @@
 // gameAnalytics.ts
 
 import { PrismaClient } from '@prisma/client';
-import { CrashGame } from './crashGame.js';
+import { CrashGame } from './crashGame';
 
 const prisma = new PrismaClient();
 
