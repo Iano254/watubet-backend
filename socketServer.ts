@@ -184,7 +184,7 @@ export function setupSocketServer(server: http.Server): void {
   // First, initialize the Server
   io = new Server(server, {
     cors: {
-      origin: "https://staging-watubet.eloise.co.ke/",
+      origin: "*",
       methods: ["GET", "POST"]
     }
   });
