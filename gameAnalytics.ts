@@ -126,8 +126,8 @@ export class GameAnalyticsManager {
     const analytics = await this.getGameAnalytics();
     const retention = await this.getPlayerRetention();
 
-    let newHouseEdge = await CrashGame.getHouseEdge();
-    let newMaxCrashPoint = await CrashGame.getMaxAllowedCrashpoint();
+    let newHouseEdge = 0.25;
+    let newMaxCrashPoint = 3.0;
 
     if (analytics.effectiveHouseEdge < this.targetProfitMargin) {
       newHouseEdge = Math.min(newHouseEdge + 0.01, 0.10); // Increase house edge, max 10%
@@ -140,9 +140,10 @@ export class GameAnalyticsManager {
       newHouseEdge = Math.min(newHouseEdge + 0.02, 0.15); // Significant increase in house edge
       newMaxCrashPoint = Math.max(newMaxCrashPoint * 0.9, 20); // Decrease max crash point, min 20x
     }
-
-    CrashGame.setHouseEdge(await newHouseEdge);
-    CrashGame.setMaxCrashPoint(Promise.resolve(newMaxCrashPoint));
+    const crashGame = new CrashGame();
+    crashGame.setHouseEdge(newHouseEdge);
+    
+    crashGame.setMaxAllowedCrashpoint(newMaxCrashPoint);
 
     console.log(`Game parameters adjusted. New house edge: ${newHouseEdge}, New max crash point: ${newMaxCrashPoint}`);
   }

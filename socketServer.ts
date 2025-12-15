@@ -1417,7 +1417,7 @@ socket.on('setEmergencyThreshold', async ({ amount, walletId }: { amount: number
     }
 
     if (crashGameInstance) {
-      await CrashGame.setEmergencyThreshold(amount);
+      await crashGameInstance.setEmergencyThreshold(amount);
       socket.emit('emergencyThresholdSet', { amount });
     }
   } catch (error) {
@@ -2174,7 +2174,7 @@ async function handleAffiliateWithdrawalSuccess(callbackData: any) {
           // Check if emergency crash is triggered
           if (crashGameInstance.getIsEmergencyCrash()) {
             console.log('Emergency crash triggered - ending game immediately');
-            const maxAllowedCrashpoint = await CrashGame.getMaxAllowedCrashpoint();
+            const maxAllowedCrashpoint = await crashGameInstance.getMaxAllowedCrashpoint();
 
             // Force an immediate crash
             await currentGame.setCurrentCrashPoint(currentMultiplier);
@@ -2420,7 +2420,7 @@ socket.on('secondCashout', async ({ walletId }: { walletId: string }) => {
       // Check if emergency crash is triggered
       if (crashGameInstance.getIsEmergencyCrash()) {
         console.log('Emergency crash triggered from second bet - ending game immediately');
-        const maxAllowedCrashpoint = await CrashGame.getMaxAllowedCrashpoint();
+        const maxAllowedCrashpoint = await crashGameInstance.getMaxAllowedCrashpoint();
 
         // Force an immediate crash
         await currentGame.setCurrentCrashPoint(currentMultiplier);
@@ -2610,7 +2610,7 @@ socket.on('setMaxCrashpoint', async ({ value, walletId }: { value: number, walle
     }
 
     if (crashGameInstance) {
-      await CrashGame.setMaxAllowedCrashpoint(value);
+      await crashGameInstance.setMaxAllowedCrashpoint(value);
       socket.emit('maxCrashpointSet', { value });
     }
   } catch (error) {
@@ -2637,7 +2637,7 @@ socket.on('toggleMaxCrashpoint', async ({ enabled, walletId }: { enabled: boolea
     }
 
     if (crashGameInstance) {
-      await CrashGame.setEnforceMaxCrashpoint(enabled);
+      await crashGameInstance.setEnforceMaxCrashpoint(enabled);
       socket.emit('maxCrashpointEnforcement', { enabled });
     }
   } catch (error) {
@@ -2711,7 +2711,7 @@ async function checkEmergencyConditions(
   const hasRealPlayers = [...activeBets, ...activeSecondBets].length > 0;
 
   // Get all thresholds
-  const maxAllowedCrashpoint = await CrashGame.getMaxAllowedCrashpoint();
+  const maxAllowedCrashpoint = await crashGameInstance.getMaxAllowedCrashpoint();
   const isEnforceMaxCrashpoint = await crashGameInstance.isEnforceMaxCrashpointEnabled();
   const { threshold: probableWinThreshold, enabled: isProbableWinEnabled } = await crashGameInstance.getProbableWinSettings();
   const totalWonEmergency = parseFloat((await prisma.gameSettings.findUnique({ where: { key: 'totalWonEmergency' } }))?.value || '200');
@@ -2887,7 +2887,7 @@ async function runGame(io: Server): Promise<void> {
 
         // Add specific details based on the reason
         if (emergencyCheck.reason === 'MAX_CRASHPOINT') {
-          const maxAllowedCrashpoint = await CrashGame.getMaxAllowedCrashpoint();
+          const maxAllowedCrashpoint = await crashInstance.getMaxAllowedCrashpoint();
           emergencyCrashInfo.maxAllowed = maxAllowedCrashpoint;
         }
         else if (emergencyCheck.reason === 'POTENTIAL_WINNINGS') {
@@ -3348,7 +3348,7 @@ async function startNewGame(io: Server): Promise<void> {
         salt: salt,
         clientSeed: clientSeed,
         serverSeed: gameHash,
-        houseEdge: await CrashGame.getHouseEdge(),
+        houseEdge: await crashGameInstance.getHouseEdge(),
         startTime: new Date(Date.now() + 5000),
       }
     });
@@ -3421,7 +3421,7 @@ async function startNewGame(io: Server): Promise<void> {
     io.emit('revealServerSeed', {
       gameHash: lastGameHash,
       serverSeed: gameHash,
-      houseEdge: await CrashGame.getHouseEdge()
+      houseEdge: await crashGameInstance.getHouseEdge()
     });
 
     // Update the last game hash for the next round
