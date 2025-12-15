@@ -127,7 +127,7 @@ export class GameAnalyticsManager {
     const retention = await this.getPlayerRetention();
 
     let newHouseEdge = 0.25;
-    let newMaxCrashPoint = 3.0;
+    let newMaxCrashPoint = 300.0;
 
     if (analytics.effectiveHouseEdge < this.targetProfitMargin) {
       newHouseEdge = Math.min(newHouseEdge + 0.01, 0.10); // Increase house edge, max 10%
