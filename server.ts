@@ -1,8 +1,8 @@
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import { setupSocketServer, getOnlineUsersStats } from './socketServer';
-import gameRoutes from './gameRoutes';
+import { setupSocketServer, getOnlineUsersStats } from './socketServer.ts';
+import gameRoutes from './gameRoutes.ts';
 
 const app = express();
 const server = http.createServer(app);
