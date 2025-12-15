@@ -249,7 +249,7 @@ export class CrashGame {
     return this.emergencyThreshold;
   }
 
-  public async setMaxAllowedCrashpoint(value: number): Promise<void> {
+  public static async setMaxAllowedCrashpoint(value: number): Promise<void> {
     if (value < 1.0) {
       throw new Error('Max crashpoint must be greater than 1.0');
     }
@@ -354,7 +354,7 @@ export class CrashGame {
     this.isEmergencyCrash = false;
   }
 
-  public async getMaxAllowedCrashpoint(): Promise<number> {
+  public static async getMaxAllowedCrashpoint(): Promise<number> {
     await this.getEmergencySettings();
     return this.maxAllowedCrashpoint;
   }
@@ -591,7 +591,7 @@ public async advanceToNextRound(): Promise<void> {
     });
   }
 
-  public async setHouseEdge(newHouseEdge: number): Promise<void> {
+  public static async setHouseEdge(newHouseEdge: number): Promise<void> {
     if (newHouseEdge < 0 || newHouseEdge >= 1) {
       throw new Error('House edge must be between 0 and 1');
     }
@@ -607,7 +607,7 @@ public async advanceToNextRound(): Promise<void> {
     }
   }
 
-  public async getHouseEdge(): Promise<number> {
+  public static async getHouseEdge(): Promise<number> {
     try {
       const setting = await prisma.gameSettings.findUnique({
         where: { key: 'houseEdge' }
