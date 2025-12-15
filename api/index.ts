@@ -1,8 +1,8 @@
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
-import { setupSocketServer } from '../socketServer';
-import gameRoutes from '../gameRoutes';
+import { setupSocketServer } from '../socketServer.js';
+import gameRoutes from '../gameRoutes.js';
 import axios from 'axios';
 
 
