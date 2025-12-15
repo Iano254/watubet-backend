@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
-import { GameSession } from '../../gameSession';
+import { GameSession } from '../../gameSession.js';
 import { PrismaClient } from '@prisma/client';
-import { CrashGame } from '../../crashGame';
+import { CrashGame } from '../../crashGame.js';
 
 const prisma = new PrismaClient();
 

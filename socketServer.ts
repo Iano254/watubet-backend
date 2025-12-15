@@ -3,28 +3,28 @@ import http from 'http';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { PrismaClient, User as PrismaUser, Game as PrismaGame, ChatMessage, MessageReaction, Prisma, AffiliateEarning } from '@prisma/client';
-import { CrashGame } from './crashGame';
-import { GameSession, GameState } from './gameSession';
-import { generateTokens, verifyToken, verifyRefreshToken, invalidateRefreshToken} from './authMiddleware';
+import { CrashGame } from './crashGame.js';
+import { GameSession, GameState } from './gameSession.js';
+import { generateTokens, verifyToken, verifyRefreshToken, invalidateRefreshToken} from './authMiddleware.js';
 import { v4 as uuidv4 } from 'uuid';
-import { sendVerificationCode, checkVerificationCode } from './twilioverify';
-import { initiateSTKPush, b2cPaymentRequest, querySTKPush  } from './src/utils/mpesaUtils';
-import { BetSimulator } from './src/services/BetSimulator';
-import { MinesGame } from './MinesGame';
+import { sendVerificationCode, checkVerificationCode } from './twilioverify.js';
+import { initiateSTKPush, b2cPaymentRequest, querySTKPush  } from './src/utils/mpesaUtils.js';
+import { BetSimulator } from './src/services/BetSimulator.js';
+import { MinesGame } from './MinesGame.js';
 import {
   processAffiliateEarnings,
   handleAffiliateWithdrawal,
   processSuccessfulAffiliateWithdrawal,
   handleAffiliateWithdrawalCallback,
   calculateAffiliateStats
-} from './services/affiliateService';
+} from './services/affiliateService.js';
 
 import {
   BonusType,
   processDepositCashbackBonus,
   checkLosingStreakBonus,
   checkWinningStreakBonus
-} from './services/bonusService'; // Added bonus service imports
+} from './services/bonusService.js'; // Added bonus service imports
 
 const prisma = new PrismaClient({
   log: ['error', 'warn']
