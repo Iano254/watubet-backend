@@ -1,12 +1,12 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import { Server as SocketIOServer } from 'socket.io';
-import { getCurrentGame, updateUserBalance, getUsers, getOnlineUsersStats, getCrashGameInstance } from './socketServer.ts';
-import { CrashGame } from './crashGame.ts';
+import { getCurrentGame, updateUserBalance, getUsers, getOnlineUsersStats, getCrashGameInstance } from './socketServer.js';
+import { CrashGame } from './crashGame.js';
 import axios from 'axios';
 import moment from 'moment';
 import fs from 'fs';
-import { initiateSTKPush, b2cPaymentRequest, querySTKPush, accountBalanceQuery, transactionStatusQuery } from './src/utils/mpesaUtils.ts';
+import { initiateSTKPush, b2cPaymentRequest, querySTKPush, accountBalanceQuery, transactionStatusQuery } from './src/utils/mpesaUtils.js';
 import dotenv from 'dotenv';
 import crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,7 +15,7 @@ import {
   getBonusSettings,
   updateBonusSettings,
   getUserBonusHistory
-} from './services/bonusService.ts'; // Added bonus service imports
+} from './services/bonusService.js'; // Added bonus service imports
 
 
 
