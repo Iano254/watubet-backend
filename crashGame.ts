@@ -5,6 +5,10 @@ const prisma = new PrismaClient({
   log: ['error', 'warn']
 });
 export class CrashGame {
+  static maxAllowedCrashpoint: number | PromiseLike<number>;
+  static setMaxCrashPoint(newMaxCrashPoint: Promise<number>) {
+    throw new Error('Method not implemented.');
+  }
   private readonly POINTS_TO_GENERATE = 25;
   private currentCrashPoint: number;
   private emergencyThreshold: number;
@@ -51,7 +55,7 @@ export class CrashGame {
 
   private async initializeSettings(): Promise<void> {
     await Promise.all([
-      this.getEmergencySettings(),
+      CrashGame.getEmergencySettings(),
       this.initializeHouseEdge(),
       this.getBetBasedCrashPointSettings()
     ]);
@@ -68,7 +72,7 @@ export class CrashGame {
     console.log("After forcing, bet-based crash point enabled:", this.isBetBasedCrashPoint);
   }
 
-  private async getEmergencySettings(): Promise<void> {
+  private static async getEmergencySettings(): Promise<void> {
     try {
       const [emergencyThreshold, maxCrashpoint, enforceMax] = await Promise.all([
         prisma.gameSettings.findUnique({ where: { key: 'emergencyThreshold' } }),
@@ -81,34 +85,34 @@ export class CrashGame {
         await prisma.gameSettings.create({
           data: { key: 'emergencyThreshold', value: '1000' }
         });
-        this.emergencyThreshold = 1000;
+        this.setEmergencyThreshold(1000);
       } else {
-        this.emergencyThreshold = parseFloat(emergencyThreshold.value);
+        this.setEmergencyThreshold(parseFloat(emergencyThreshold.value));
       }
 
       if (!maxCrashpoint) {
         await prisma.gameSettings.create({
           data: { key: 'maxCrashpoint', value: '3.0' }
         });
-        this.maxAllowedCrashpoint = 3.0;
+        this.setMaxAllowedCrashpoint(3.0);
       } else {
-        this.maxAllowedCrashpoint = parseFloat(maxCrashpoint.value);
+        this.setMaxAllowedCrashpoint(parseFloat(maxCrashpoint.value));
       }
 
       if (!enforceMax) {
         await prisma.gameSettings.create({
           data: { key: 'maxCrashpointEnabled', value: 'true' }
         });
-        this.enforceMaxCrashpoint = true;
+        this.setEnforceMaxCrashpoint(true);
       } else {
-        this.enforceMaxCrashpoint = enforceMax.value === 'true';
+        this.setEnforceMaxCrashpoint(enforceMax.value === 'true');
       }
 
-      console.log('Emergency settings loaded:', {
-        threshold: this.emergencyThreshold,
-        maxCrashpoint: this.maxAllowedCrashpoint,
-        enforceMax: this.enforceMaxCrashpoint
-      });
+      // console.log('Emergency settings loaded:', {
+      //   threshold: this.emergencyThreshold,
+      //   maxCrashpoint: this.maxAllowedCrashpoint,
+      //   enforceMax: this.enforceMaxCrashpoint
+      // });
     } catch (error) {
       console.error('Error loading emergency settings:', error);
       throw error;
@@ -227,7 +231,7 @@ export class CrashGame {
     return this.isEmergencyCrash;
   }
 
-  public async setEmergencyThreshold(amount: number): Promise<void> {
+  public static async setEmergencyThreshold(amount: number): Promise<void> {
     try {
       await prisma.gameSettings.upsert({
         where: { key: 'emergencyThreshold' },
@@ -245,7 +249,7 @@ export class CrashGame {
   }
 
   public async getEmergencyThreshold(): Promise<number> {
-    await this.getEmergencySettings();
+    await CrashGame.getEmergencySettings();
     return this.emergencyThreshold;
   }
 
@@ -270,7 +274,8 @@ export class CrashGame {
     }
   }
 
-  public async setEnforceMaxCrashpoint(enabled: boolean): Promise<void> {
+
+  public static async setEnforceMaxCrashpoint(enabled: boolean): Promise<void> {
     try {
       await prisma.gameSettings.upsert({
         where: { key: 'maxCrashpointEnabled' },
@@ -309,7 +314,7 @@ export class CrashGame {
   public async shouldEmergencyCrash(currentMultiplier: number, activeBets: Array<{ amount: number, walletId: string }>): Promise<boolean> {
     try {
       // Always get fresh settings before checking
-      await this.getEmergencySettings();
+      await CrashGame.getEmergencySettings();
   
       // Calculate total potential winnings at current multiplier for all active bets
       let totalPotentialWinnings = 0;
@@ -360,7 +365,7 @@ export class CrashGame {
   }
 
   public async isEnforceMaxCrashpointEnabled(): Promise<boolean> {
-    await this.getEmergencySettings();
+    await CrashGame.getEmergencySettings();
     return this.enforceMaxCrashpoint;
   }
 
@@ -376,7 +381,7 @@ export class CrashGame {
   }
 
   private async calculateCrashPoint(gameHash: string, clientSeed: string, salt: string): Promise<number> {
-    const houseEdge = await this.getHouseEdge();
+    const houseEdge = await CrashGame.getHouseEdge();
     const hash = this.calculateHmac(clientSeed + '-' + salt, gameHash);
     const h = parseInt(hash.slice(0, 52 / 4), 16);
     const e = Math.pow(2, 52);
@@ -454,12 +459,12 @@ export class CrashGame {
   }
 
   public async generateNextRounds(previousGameHash: string): Promise<void> {
-    await this.getEmergencySettings();
+    await CrashGame.getEmergencySettings();
     
     let currentHash = this.generateHash(previousGameHash);
     const clientSeed = await this.getClientSeed();
     const salt = CrashGame.generateNewSalt();
-    const houseEdge = await this.getHouseEdge();
+    const houseEdge = await CrashGame.getHouseEdge();
   
     console.log(`Generating ${this.POINTS_TO_GENERATE} future crash points`);
     
@@ -532,7 +537,7 @@ public async diagnosticCheckFutureCrashPoints(): Promise<void> {
 }
 
 public async advanceToNextRound(): Promise<void> {
-  await this.getEmergencySettings();
+  await CrashGame.getEmergencySettings();
 
   try {
     // Check if we have any future crash points
@@ -768,7 +773,7 @@ public async advanceToNextRound(): Promise<void> {
     currentGameWinnings: number;
   }> {
     try {
-      await this.getEmergencySettings();
+      await CrashGame.getEmergencySettings();
       const games = await prisma.game.findMany({
         take: 1000,
         orderBy: { startTime: 'desc' },
